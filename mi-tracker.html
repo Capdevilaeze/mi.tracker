@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mi Tracker">
+<meta name="theme-color" content="#0D0D0D">
+<title>Mi Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+:root{
+  --bg:#0D0D0D;--bg2:#161616;--bg3:#1E1E1E;
+  --border:#2A2A2A;--border2:#333;
+  --text:#F0EDE6;--text2:#888;--text3:#555;
+  --accent:#C8F135;--accent-dim:#9BB827;
+  --btc:#F7931A;--usd:#34C77B;
+  --red:#E24B4A;--amber:#EF9F27;--blue:#4A9EE8;
+  --radius:14px;--radius-sm:8px;
+  --font:'Syne',sans-serif;--mono:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overscroll-behavior:none}
+body{display:flex;flex-direction:column;max-width:430px;margin:0 auto}
+.header{padding:20px 16px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid var(--border)}
+.header-title{font-size:18px;font-weight:700;letter-spacing:-0.03em}
+.header-title span{color:var(--accent)}
+.header-date{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.nav{display:flex;background:var(--bg2);border-top:0.5px solid var(--border);padding:4px 8px 8px;padding-bottom:calc(8px + env(safe-area-inset-bottom));position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;gap:4px;z-index:100}
+.nav-btn{flex:1;padding:8px 4px 6px;border:none;background:transparent;border-radius:var(--radius-sm);font-size:10px;font-weight:600;font-family:var(--font);cursor:pointer;color:var(--text3);transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:4px;letter-spacing:0.04em;text-transform:uppercase}
+.nav-btn i{font-size:20px}
+.nav-btn.active{color:var(--accent)}
+.scroll-area{flex:1;overflow-y:auto;padding:16px;padding-bottom:calc(80px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
+.section{display:none}.section.active{display:block}
+.tab-sub{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.tab-sub::-webkit-scrollbar{display:none}
+.tab-sub-btn{padding:8px 16px;border:0.5px solid var(--border2);border-radius:20px;font-size:12px;font-weight:600;font-family:var(--font);cursor:pointer;background:transparent;color:var(--text2);white-space:nowrap;flex-shrink:0;letter-spacing:0.03em;transition:all 0.2s}
+.tab-sub-btn.active{background:var(--accent);color:#0D0D0D;border-color:var(--accent)}
+.card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.card-title{font-size:10px;font-weight:600;color:var(--text3);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.1em}
+.fg{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.fg label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em}
+input,select{width:100%;padding:12px 14px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);font-size:15px;background:var(--bg3);color:var(--text);font-family:var(--font);appearance:none;-webkit-appearance:none;transition:border-color 0.2s}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+input::placeholder{color:var(--text3)}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{padding:14px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg3);color:var(--text);font-size:14px;font-weight:600;font-family:var(--font);cursor:pointer;width:100%;transition:all 0.2s;letter-spacing:0.02em}
+.btn:active{transform:scale(0.98)}
+.btn-accent{background:var(--accent);border-color:var(--accent);color:#0D0D0D}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.metric{border-radius:var(--radius);padding:14px;border:0.5px solid var(--border)}
+.metric label{font-size:10px;font-weight:600;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em}
+.metric-v{font-size:22px;font-weight:700;font-family:var(--mono);letter-spacing:-0.02em}
+.metric-s{font-size:11px;margin-top:3px;font-family:var(--mono)}
+.m-gastos{background:#1A0E0E;border-color:#3D1A1A}.m-gastos label{color:#7A3535}.m-gastos .metric-v{color:var(--red)}.m-gastos .metric-s{color:#7A3535}
+.m-inv{background:#0E1A0E;border-color:#1A3D1A}.m-inv label{color:#356B35}.m-inv .metric-v{color:var(--usd)}.m-inv .metric-s{color:#356B35}
+.m-gym{background:#0E0E1A;border-color:#1A1A3D}.m-gym label{color:#35357A}.m-gym .metric-v{color:var(--blue)}.m-gym .metric-s{color:#35357A}
+.m-cig{background:#1A130E;border-color:#3D2A1A}.m-cig label{color:#7A5A35}.m-cig .metric-v{color:var(--amber)}.m-cig .metric-s{color:#7A5A35}
+.cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:14px}
+.cat-btn{padding:10px;border:0.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:600;font-family:var(--font);cursor:pointer;display:flex;align-items:center;gap:8px;transition:all 0.15s;letter-spacing:0.02em}
+.cat-btn:active{transform:scale(0.97)}
+.cat-btn i{font-size:16px;flex-shrink:0}
+.inv-opt{display:flex;align-items:center;gap:14px;padding:14px;border:0.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;margin-bottom:10px;transition:all 0.2s;background:var(--bg3)}
+.inv-opt.sel-btc{border-color:var(--btc);background:#1A100A}
+.inv-opt.sel-usd{border-color:var(--usd);background:#0A1A10}
+.inv-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0;color:#fff;font-family:var(--mono)}
+.inv-icon-btc{background:var(--btc)}
+.inv-icon-usd{background:#1A6640}
+.inv-name{font-size:15px;font-weight:600}
+.inv-sub{font-size:12px;color:var(--text2);margin-top:2px;font-family:var(--mono)}
+.smoke-wrap{display:flex;flex-direction:column;align-items:center;padding:24px 0 16px}
+.smoke-big{font-family:var(--mono);font-size:80px;font-weight:500;line-height:1;letter-spacing:-0.04em;transition:color 0.3s}
+.smoke-lbl{font-size:12px;color:var(--text2);margin-top:6px;margin-bottom:20px;text-transform:uppercase;letter-spacing:0.1em}
+.smoke-add-btn{width:72px;height:72px;border-radius:50%;border:none;background:var(--accent);color:#0D0D0D;font-size:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-weight:600;transition:all 0.15s;box-shadow:0 0 24px rgba(200,241,53,0.25)}
+.smoke-add-btn:active{transform:scale(0.91);box-shadow:none}
+.smoke-undo{padding:8px 20px;border:0.5px solid var(--border2);border-radius:20px;background:transparent;color:var(--text2);font-size:12px;font-family:var(--font);font-weight:600;cursor:pointer}
+.pip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px;justify-content:center;max-width:280px}
+.pip{width:28px;height:28px;border-radius:50%;background:#1A0E0E;border:0.5px solid #5A2525;display:flex;align-items:center;justify-content:center}
+.pip i{font-size:14px;color:var(--red)}
+.prog{height:4px;background:var(--bg3);border-radius:2px;margin-top:10px;overflow:hidden}
+.prog-f{height:100%;border-radius:2px;background:var(--accent);transition:width 0.3s,background 0.3s}
+.week-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px}
+.day-cell{display:flex;flex-direction:column;align-items:center;gap:5px}
+.day-lbl{font-size:9px;color:var(--text3);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;font-family:var(--mono)}
+.day-dot{width:36px;height:36px;border-radius:50%;border:0.5px solid var(--border2);background:var(--bg3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.day-dot.on{background:var(--accent);border-color:var(--accent)}
+.day-dot.on i{color:#0D0D0D}
+.day-dot i{color:var(--text3);font-size:16px}
+.gym-meta{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+.gym-big{font-family:var(--mono);font-size:32px;font-weight:500;color:var(--accent)}
+.gym-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.gym-prog-wrap{width:80px;margin-top:6px}
+.gym-prog{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.gym-prog-f{height:100%;border-radius:2px;background:var(--blue);transition:width 0.3s}
+.list-item{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:0.5px solid var(--border);font-size:13px}
+.list-item:last-child{border-bottom:none}
+.list-desc{font-weight:500;margin-bottom:2px}
+.list-meta{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.empty{text-align:center;padding:32px;color:var(--text3);font-size:13px;font-family:var(--mono)}
+.chart-wrap{position:relative;width:100%;height:200px;margin-top:10px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.ld-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);font-family:var(--mono)}
+.ld{width:8px;height:8px;border-radius:2px}
+.gym-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border);font-family:var(--mono);font-size:13px}
+.gym-row:last-child{border-bottom:none}
+.toast{position:fixed;bottom:calc(76px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:var(--accent);color:#0D0D0D;padding:10px 22px;border-radius:20px;font-size:13px;font-weight:700;font-family:var(--font);z-index:999;opacity:0;transition:all 0.25s;white-space:nowrap;letter-spacing:0.02em;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">Mi<span>Tracker</span></div>
+  <div class="header-date" id="header-date"></div>
+</div>
+
+<div class="scroll-area">
+
+  <div class="section active" id="s-registrar">
+    <div class="tab-sub">
+      <button class="tab-sub-btn active" onclick="showForm('gasto',this)">💸 Gasto</button>
+      <button class="tab-sub-btn" onclick="showForm('inversion',this)">📈 Inversión</button>
+      <button class="tab-sub-btn" onclick="showForm('gym',this)">💪 Gym</button>
+      <button class="tab-sub-btn" onclick="showForm('cig',this)">🚬 Cigarrillos</button>
+    </div>
+
+    <div id="form-gasto">
+      <div class="card">
+        <div class="card-title">Categoría</div>
+        <div class="cat-grid" id="cat-grid"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Detalle</div>
+        <div class="fg"><label>Monto ($ARS)</label><input type="number" id="g-monto" placeholder="0" inputmode="numeric"></div>
+        <div class="fr" style="margin-bottom:12px">
+          <div class="fg"><label>Tipo</label><select id="g-tipo"><option>Variable</option><option>Fijo</option></select></div>
+          <div class="fg"><label>Fecha</label><input type="date" id="g-fecha"></div>
+        </div>
+        <div class="fg" style="margin-bottom:14px"><label>Descripción</label><input type="text" id="g-desc" placeholder="¿En qué?"></div>
+        <button class="btn btn-accent" onclick="guardarGasto()">Guardar gasto</button>
+      </div>
+    </div>
+
+    <div id="form-inversion" style="display:none">
+      <div class="card">
+        <div class="card-title">¿Qué compraste?</div>
+        <div class="inv-opt sel-btc" id="inv-BTC" onclick="selInv('BTC')">
+          <div class="inv-icon inv-icon-btc">₿</div>
+          <div><div class="inv-name">Bitcoin</div><div class="inv-sub">BTC — cripto</div></div>
+        </div>
+        <div class="inv-opt" id="inv-USD" onclick="selInv('USD')">
+          <div class="inv-icon inv-icon-usd">$</div>
+          <div><div class="inv-name">Dólar</div><div class="inv-sub">USD / Stablecoin</div></div>
+        </div>
+        <div class="fr" style="margin-bottom:12px;margin-top:4px">
+          <div class="fg"><label>Cantidad</label><input type="number" id="i-monto" placeholder="0.00" step="0.01" inputmode="decimal"></div>
+          <div class="fg"><label>Moneda</label><select id="i-moneda"><option>USD</option><option>USDT</option><option>ARS</option></select></div>
+        </div>
+        <div class="fr" style="margin-bottom:14px">
+          <div class="fg"><label>Fecha</label><input type="date" id="i-fecha"></div>
+          <div class="fg"><label>Nota</label><input type="text" id="i-nota" placeholder="DCA, extra..."></div>
+        </div>
+        <button class="btn btn-accent" onclick="guardarInv()">Guardar inversión</button>
+      </div>
+    </div>
+
+    <div id="form-gym" style="display:none">
+      <div class="card">
+        <div class="card-title">Esta semana</div>
+        <div class="week-row" id="week-grid"></div>
+        <div class="gym-meta">
+          <div><div class="gym-big" id="gym-dias-num">0</div><div class="gym-sub">días esta semana</div></div>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:var(--text3)">Meta: 4 días</div>
+            <div class="gym-prog-wrap"><div class="gym-prog"><div class="gym-prog-f" id="gym-prog" style="width:0%"></div></div></div>
+          </div>
+        </div>
+        <button class="btn btn-accent" onclick="guardarGym()">Guardar semana</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Historial</div>
+        <div id="gym-hist-list"><div class="empty">Sin entrenamientos</div></div>
+      </div>
+    </div>
+
+    <div id="form-cig" style="display:none">
+      <div class="card">
+        <div class="smoke-wrap">
+          <div class="smoke-big" id="cig-num">0</div>
+          <div class="smoke-lbl">cigarrillos hoy</div>
+          <button class="smoke-add-btn" onclick="addCig()" aria-label="Agregar cigarrillo">+</button>
+          <button class="smoke-undo" onclick="undoCig()">↩ Deshacer</button>
+          <div class="pip-row" id="pip-row"></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);font-family:var(--mono);margin-bottom:4px"><span>Límite diario</span><span id="cig-pct">0 / 10</span></div>
+          <div class="prog"><div class="prog-f" id="cig-prog" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Últimos 7 días</div>
+        <div id="cig-hist"><div class="empty">Sin registros</div></div>
+      </div>
+      <button class="btn btn-accent" onclick="guardarCig()" style="margin-top:2px">Registrar día de hoy</button>
+    </div>
+  </div>
+
+  <div class="section" id="s-historial">
+    <div class="tab-sub">
+      <button class="tab-sub-btn active" onclick="showHist('gh',this)">Gastos</button>
+      <button class="tab-sub-btn" onclick="showHist('ih',this)">Inversiones</button>
+    </div>
+    <div class="card" id="gh"><div id="lista-g"><div class="empty">Sin gastos</div></div></div>
+    <div class="card" id="ih" style="display:none"><div id="lista-i"><div class="empty">Sin inversiones</div></div></div>
+  </div>
+
+  <div class="section" id="s-resumen">
+    <div class="metric-grid">
+      <div class="metric m-gastos"><label>Gastos</label><div class="metric-v" id="m-g">$0</div><div class="metric-s">acumulado</div></div>
+      <div class="metric m-inv"><label>Inversiones</label><div class="metric-v" id="m-i">$0</div><div class="metric-s">acumulado</div></div>
+      <div class="metric m-gym"><label>Gym / semana</label><div class="metric-v" id="m-gym">0 días</div><div class="metric-s">meta: 4</div></div>
+      <div class="metric m-cig"><label>Cig. hoy</label><div class="metric-v" id="m-cig">0</div><div class="metric-s">prom: <span id="m-avg">0</span>/día</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Gastos vs inversión</div>
+      <div class="chart-wrap"><canvas id="c-pie"></canvas></div>
+      <div class="legend" id="l-pie"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Gastos por categoría</div>
+      <div class="chart-wrap"><canvas id="c-cat"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Cigarrillos — últimos 7 días</div>
+      <div class="chart-wrap"><canvas id="c-cig"></canvas></div>
+    </div>
+  </div>
+
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="goTo('registrar',this)"><i class="ti ti-plus"></i>Registrar</button>
+  <button class="nav-btn" onclick="goTo('historial',this)"><i class="ti ti-list"></i>Historial</button>
+  <button class="nav-btn" onclick="goTo('resumen',this)"><i class="ti ti-chart-pie"></i>Resumen</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const STORAGE_KEY='mitracker_v1';
+const CATS=[
+  {id:'velez',icon:'ti-shirt-sport',label:'Vélez',color:'#003087'},
+  {id:'internet',icon:'ti-wifi',label:'Internet',color:'#533AB7'},
+  {id:'supermercado',icon:'ti-shopping-cart',label:'Supermercado',color:'#3B6D11'},
+  {id:'ropa',icon:'ti-hanger',label:'Ropa',color:'#993556'},
+  {id:'zapatillas',icon:'ti-shoe',label:'Zapatillas',color:'#712B13'},
+  {id:'cigarrillos',icon:'ti-smoking',label:'Cigarrillos',color:'#5F5E5A'},
+  {id:'faso',icon:'ti-leaf',label:'Faso',color:'#27500A'},
+  {id:'heladeria',icon:'ti-ice-cream',label:'Heladería',color:'#185FA5'},
+  {id:'panaderia',icon:'ti-bread',label:'Panadería',color:'#854F0B'},
+  {id:'bondi',icon:'ti-bus',label:'Bondi',color:'#A32D2D'},
+  {id:'subte',icon:'ti-train',label:'Subte',color:'#0F6E56'},
+  {id:'tren',icon:'ti-train',label:'Tren',color:'#3C3489'},
+  {id:'visa',icon:'ti-credit-card',label:'Visa',color:'#1A1F71'},
+  {id:"master",icon:"ti-credit-card",label:"Master",color:"#9B1C1C"},{id:"alquiler",icon:"ti-home",label:"Alquiler",color:"#5C3D8F"},{id:"expensas",icon:"ti-building",label:"Expensas",color:"#2E6E8E"},{id:"abl",icon:"ti-map-pin",label:"ABL",color:"#6B4C1E"},{id:"luz",icon:"ti-bolt",label:"Luz",color:"#B8860B"},{id:"claro",icon:"ti-device-mobile",label:"Claro",color:"#C0392B"},
+];
+const DIAS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+let db={gastos:[],inversiones:[],gym:[],cigarrillos:[]};
+let cigHoy=0,gymDias=[],selCat=CATS[0].id,selInvTipo='BTC';
+let chPie,chCat,chCig;
+
+function guardarDB(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({db,cigHoy,gymDias,selCat,selInvTipo}));}catch(e){}}
+function cargarDB(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;
+    const p=JSON.parse(raw);
+    db=p.db||db;cigHoy=p.cigHoy||0;gymDias=p.gymDias||[];selCat=p.selCat||CATS[0].id;selInvTipo=p.selInvTipo||'BTC';
+  }catch(e){}
+}
+function today(){return new Date().toISOString().split('T')[0];}
+function fmtARS(n){return '$'+Math.round(n).toLocaleString('es-AR');}
+function getSemKey(){const now=new Date(),dow=now.getDay();const s=new Date(now);s.setDate(now.getDate()-dow);return s.toISOString().split('T')[0];}
+function flash(msg,col){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.style.background=col||'var(--accent)';t.style.color=col?'#fff':'#0D0D0D';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);
+}
+function setHeaderDate(){
+  const d=new Date();
+  document.getElementById('header-date').textContent=d.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
+}
+function goTo(id,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('s-'+id).classList.add('active');btn.classList.add('active');
+  if(id==='resumen')setTimeout(renderCharts,60);
+  if(id==='historial')renderHists();
+}
+function showForm(id,btn){
+  ['gasto','inversion','gym','cig'].forEach(f=>document.getElementById('form-'+f).style.display=f===id?'':'none');
+  document.querySelectorAll('#s-registrar .tab-sub-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+}
+function showHist(id,btn){
+  ['gh','ih'].forEach(f=>document.getElementById(f).style.display=f===id?'':'none');
+  document.querySelectorAll('#s-historial .tab-sub-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+}
+function buildCatGrid(){
+  document.getElementById('cat-grid').innerHTML=CATS.map(c=>
+    `<button class="cat-btn" onclick="selCatFn('${c.id}',this)" style="${c.id===selCat?'background:'+c.color+';color:#fff;border-color:'+c.color:''}"><i class="ti ${c.icon}"></i>${c.label}</button>`
+  ).join('');
+}
+function selCatFn(id,el){
+  document.querySelectorAll('.cat-btn').forEach(b=>{b.style.background='';b.style.color='';b.style.borderColor='';});
+  selCat=id;const cat=CATS.find(c=>c.id===id);
+  el.style.background=cat.color;el.style.color='#fff';el.style.borderColor=cat.color;
+  guardarDB();
+}
+function selInv(tipo){
+  selInvTipo=tipo;
+  document.getElementById('inv-BTC').className='inv-opt'+(tipo==='BTC'?' sel-btc':'');
+  document.getElementById('inv-USD').className='inv-opt'+(tipo==='USD'?' sel-usd':'');
+  guardarDB();
+}
+function buildWeekGrid(){
+  const now=new Date(),dow=now.getDay();
+  document.getElementById('week-grid').innerHTML=DIAS.map((d,i)=>{
+    const dt=new Date(now);dt.setDate(now.getDate()-dow+i);
+    const ds=dt.toISOString().split('T')[0];const on=gymDias.includes(ds);
+    return `<div class="day-cell"><span class="day-lbl">${d}</span><div class="day-dot${on?' on':''}" onclick="toggleDay('${ds}',this)"><i class="ti ti-barbell"></i></div></div>`;
+  }).join('');
+  updateGymStats();
+}
+function toggleDay(ds,el){
+  const idx=gymDias.indexOf(ds);if(idx>=0)gymDias.splice(idx,1);else gymDias.push(ds);
+  el.classList.toggle('on');updateGymStats();guardarDB();
+}
+function updateGymStats(){
+  const now=new Date(),dow=now.getDay();
+  const start=new Date(now);start.setDate(now.getDate()-dow);
+  const end=new Date(start);end.setDate(start.getDate()+6);
+  const n=gymDias.filter(d=>{const dd=new Date(d);return dd>=start&&dd<=end;}).length;
+  document.getElementById('gym-dias-num').textContent=n;
+  document.getElementById('gym-prog').style.width=Math.min(100,Math.round(n/4*100))+'%';
+}
+function addCig(){cigHoy++;renderCigUI();guardarDB();}
+function undoCig(){if(cigHoy>0)cigHoy--;renderCigUI();guardarDB();}
+function renderCigUI(){
+  const num=document.getElementById('cig-num');
+  num.textContent=cigHoy;
+  num.style.color=cigHoy>10?'var(--red)':cigHoy>5?'var(--amber)':'var(--text)';
+  const pct=Math.min(100,Math.round(cigHoy/10*100));
+  document.getElementById('cig-prog').style.width=pct+'%';
+  document.getElementById('cig-prog').style.background=cigHoy>10?'var(--red)':cigHoy>5?'var(--amber)':'var(--accent)';
+  document.getElementById('cig-pct').textContent=cigHoy+' / 10';
+  document.getElementById('pip-row').innerHTML=Array.from({length:cigHoy},()=>`<div class="pip"><i class="ti ti-smoking"></i></div>`).join('');
+}
+function renderCigHist(){
+  const el=document.getElementById('cig-hist');
+  if(!db.cigarrillos.length){el.innerHTML='<div class="empty">Sin registros</div>';return;}
+  el.innerHTML=[...db.cigarrillos].reverse().slice(0,7).map(c=>
+    `<div class="list-item"><span class="list-meta">${c.fecha}</span><span style="font-weight:600;font-family:var(--mono);color:${c.cantidad>10?'var(--red)':c.cantidad>5?'var(--amber)':'var(--usd)'}">${c.cantidad} cig.</span></div>`
+  ).join('');
+}
+function renderGymHist(){
+  const el=document.getElementById('gym-hist-list');
+  if(!db.gym.length){el.innerHTML='<div class="empty">Sin entrenamientos</div>';return;}
+  el.innerHTML=[...db.gym].reverse().map(g=>
+    `<div class="gym-row"><span>${g.semana}</span><span style="color:var(--blue);font-weight:600">${g.dias} día(s)</span></div>`
+  ).join('');
+}
+function guardarGasto(){
+  const m=parseFloat(document.getElementById('g-monto').value);
+  if(!m||m<=0){flash('Ingresá un monto','#A32D2D');return;}
+  const cat=CATS.find(c=>c.id===selCat);
+  db.gastos.push({monto:m,cat:cat.label,catId:selCat,catColor:cat.color,tipo:document.getElementById('g-tipo').value,fecha:document.getElementById('g-fecha').value,desc:document.getElementById('g-desc').value||cat.label,ts:Date.now()});
+  document.getElementById('g-monto').value='';document.getElementById('g-desc').value='';
+  guardarDB();flash('Gasto guardado ✓');
+}
+function guardarInv(){
+  const m=parseFloat(document.getElementById('i-monto').value);
+  if(!m||m<=0){flash('Ingresá un monto','#A32D2D');return;}
+  db.inversiones.push({monto:m,tipo:selInvTipo,moneda:document.getElementById('i-moneda').value,fecha:document.getElementById('i-fecha').value,nota:document.getElementById('i-nota').value,ts:Date.now()});
+  document.getElementById('i-monto').value='';document.getElementById('i-nota').value='';
+  guardarDB();flash('Inversión guardada ✓');
+}
+function guardarGym(){
+  const now=new Date(),dow=now.getDay();
+  const start=new Date(now);start.setDate(now.getDate()-dow);
+  const end=new Date(start);end.setDate(start.getDate()+6);
+  const semDias=gymDias.filter(d=>{const dd=new Date(d);return dd>=start&&dd<=end;});
+  if(!semDias.length){flash('Marcá al menos un día','#A32D2D');return;}
+  const key=getSemKey();const idx=db.gym.findIndex(g=>g.semana===key);
+  const entry={semana:key,dias:semDias.length,fechas:semDias};
+  if(idx>=0)db.gym[idx]=entry;else db.gym.push(entry);
+  renderGymHist();guardarDB();flash('💪 '+semDias.length+' día(s) guardados');
+}
+function guardarCig(){
+  if(cigHoy===0){flash('Agregá cigarrillos primero','#A32D2D');return;}
+  const idx=db.cigarrillos.findIndex(c=>c.fecha===today());
+  if(idx>=0)db.cigarrillos[idx].cantidad=cigHoy;else db.cigarrillos.push({fecha:today(),cantidad:cigHoy});
+  renderCigHist();guardarDB();flash('🚬 '+cigHoy+' cigarrillos registrados');
+}
+function renderHists(){
+  const lg=document.getElementById('lista-g');
+  if(!db.gastos.length){lg.innerHTML='<div class="empty">Sin gastos registrados</div>';}
+  else lg.innerHTML=[...db.gastos].reverse().slice(0,30).map(g=>
+    `<div class="list-item"><div><div class="list-desc">${g.desc}</div><div class="list-meta">${g.fecha}</div></div><div style="display:flex;gap:8px;align-items:center;flex-shrink:0"><span class="badge" style="background:${g.catColor}22;color:${g.catColor}">${g.cat}</span><span style="font-weight:700;font-family:var(--mono)">${fmtARS(g.monto)}</span></div></div>`
+  ).join('');
+  const li=document.getElementById('lista-i');
+  if(!db.inversiones.length){li.innerHTML='<div class="empty">Sin inversiones registradas</div>';}
+  else li.innerHTML=[...db.inversiones].reverse().slice(0,30).map(i=>
+    `<div class="list-item"><div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px;font-weight:700;color:${i.tipo==='BTC'?'var(--btc)':'var(--usd)'}">${i.tipo==='BTC'?'₿':'$'}</span><span class="list-desc">${i.tipo}</span></div><div class="list-meta">${i.fecha}${i.nota?' · '+i.nota:''}</div></div><span style="font-weight:700;font-family:var(--mono);color:${i.tipo==='BTC'?'var(--btc)':'var(--usd)'}">${i.moneda} ${parseFloat(i.monto).toFixed(2)}</span></div>`
+  ).join('');
+}
+Chart.defaults.color='#555';Chart.defaults.borderColor='#2A2A2A';
+function renderCharts(){
+  const tG=db.gastos.reduce((a,g)=>a+g.monto,0);
+  const tI=db.inversiones.reduce((a,i)=>a+i.monto,0);
+  const tot=tG+tI;
+  document.getElementById('m-g').textContent=fmtARS(tG);
+  document.getElementById('m-i').textContent=fmtARS(tI);
+  const gymSem=db.gym.find(g=>g.semana===getSemKey());
+  document.getElementById('m-gym').textContent=(gymSem?gymSem.dias:0)+' días';
+  const cigR=db.cigarrillos.find(c=>c.fecha===today())?.cantidad||0;
+  document.getElementById('m-cig').textContent=cigR;
+  const avg=db.cigarrillos.length?Math.round(db.cigarrillos.reduce((a,c)=>a+c.cantidad,0)/db.cigarrillos.length):0;
+  document.getElementById('m-avg').textContent=avg;
+  const pG=tot>0?Math.round(tG/tot*100):0,pI=tot>0?Math.round(tI/tot*100):0;
+  if(chPie)chPie.destroy();
+  document.getElementById('l-pie').innerHTML=`<div class="ld-item"><div class="ld" style="background:#E24B4A"></div>Gastos ${pG}%</div><div class="ld-item"><div class="ld" style="background:#34C77B"></div>Inversiones ${pI}%</div>`;
+  chPie=new Chart(document.getElementById('c-pie'),{type:'doughnut',data:{labels:['Gastos','Inversiones'],datasets:[{data:[tG||1,tI||0],backgroundColor:['#E24B4A','#34C77B'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const cats={},catColors={};
+  db.gastos.forEach(g=>{cats[g.cat]=(cats[g.cat]||0)+g.monto;catColors[g.cat]=g.catColor;});
+  const ck=Object.keys(cats),cv=ck.map(k=>Math.round(cats[k])),cc=ck.map(k=>catColors[k]);
+  if(chCat)chCat.destroy();
+  chCat=new Chart(document.getElementById('c-cat'),{type:'bar',data:{labels:ck.length?ck:['Sin datos'],datasets:[{data:cv.length?cv:[0],backgroundColor:ck.length?cc:['#333'],borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10,family:"'DM Mono'"},maxRotation:45},grid:{display:false}},y:{ticks:{font:{size:10,family:"'DM Mono'"},callback:v=>'$'+Math.round(v).toLocaleString('es-AR')},grid:{color:'#1E1E1E'}}}}});
+  const now=new Date();
+  const last7=Array.from({length:7},(_,i)=>{const d=new Date(now);d.setDate(now.getDate()-6+i);return d.toISOString().split('T')[0];});
+  const cv7=last7.map(d=>(db.cigarrillos.find(c=>c.fecha===d)?.cantidad||0));
+  const cl7=last7.map(d=>d.slice(5).replace('-','/'));
+  if(chCig)chCig.destroy();
+  chCig=new Chart(document.getElementById('c-cig'),{type:'bar',data:{labels:cl7,datasets:[{data:cv7,backgroundColor:cv7.map(v=>v>10?'#E24B4A':v>5?'#EF9F27':'#C8F135'),borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10,family:"'DM Mono'"},color:'#555'},grid:{display:false}},y:{ticks:{stepSize:1,font:{size:10,family:"'DM Mono'"},color:'#555'},grid:{color:'#1E1E1E'}}}}});
+}
+// INIT
+cargarDB();
+setHeaderDate();
+buildCatGrid();
+buildWeekGrid();
+renderCigUI();
+renderGymHist();
+renderCigHist();
+document.getElementById('g-fecha').value=today();
+document.getElementById('i-fecha').value=today();
+document.getElementById('inv-BTC').className='inv-opt'+(selInvTipo==='BTC'?' sel-btc':'');
+document.getElementById('inv-USD').className='inv-opt'+(selInvTipo==='USD'?' sel-usd':'');
+</script>
+</body>
+</html>
