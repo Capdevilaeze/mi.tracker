@@ -363,6 +363,17 @@ input[type=color]{padding:6px;height:44px;cursor:pointer}
       </div>
     </div>
     <div class="card">
+      <div class="card-title">Sincronización manual</div>
+      <div class="setting-row" style="border:none;padding-bottom:0">
+        <div>
+          <div class="setting-label">Sincronizar todo con Sheets</div>
+          <div class="setting-sub">Manda todos tus datos guardados al Sheet de una sola vez</div>
+        </div>
+      </div>
+      <div id="sync-progress" style="display:none;font-family:var(--mono);font-size:12px;color:var(--text2);margin:10px 0;padding:10px;background:var(--bg3);border-radius:var(--radius-sm);line-height:1.8"></div>
+      <button class="btn btn-accent" onclick="sincronizarTodo()" style="margin-top:12px">☁️ Sincronizar todo ahora</button>
+    </div>
+    <div class="card">
       <div class="card-title">Datos</div>
       <div class="setting-row">
         <div><div class="setting-label">Borrar todos los datos</div><div class="setting-sub">No se puede deshacer</div></div>
@@ -426,7 +437,7 @@ let CATS=[...CATS_DEFAULT];
 let ING_CATS=[...ING_CATS_DEFAULT];
 let INVS=[...INVS_DEFAULT];
 let db={gastos:[],ingresos:[],inversiones:[],gym:[]};
-let cfg={gymMeta:4,sheetsUrl:''};
+let cfg={gymMeta:4,sheetsUrl:'https://script.google.com/macros/s/AKfycbyCqsFqCwwo5v5TpGNKCT7Ho5GtWP60m0v0yD2blevbbIzVGnmqsmHRUQWsp23j24Q3/exec'};
 let gymDias=[],selCat=CATS[0].id,selIngCat=ING_CATS[0].id,selInvId=INVS[0].id,selMedioPago='Efectivo';
 let nuevaCatColor=COLOR_PRESETS[0],nuevaIngColor=COLOR_PRESETS[19],nuevaInvColor=COLOR_PRESETS[16];
 let chIngGasto,chPie,chCat,chMedio,chIngTipo;
@@ -716,6 +727,41 @@ function guardarConfig(){
   document.getElementById('m-gym-meta').textContent=cfg.gymMeta;
   updateGymStats();save();
 }
+async function sincronizarTodo(){
+  if(!cfg.sheetsUrl){flash('Primero configurá la URL de Sheets en Ajustes','#A32D2D');return;}
+  const prog=document.getElementById('sync-progress');
+  prog.style.display='block';
+  prog.innerHTML='Iniciando sincronización...';
+  let ok=0,err=0;
+
+  async function enviar(tipo,datos){
+    try{
+      let p={tipo};
+      if(tipo==='gasto')     p={tipo,fecha:datos.fecha,desc:datos.desc,cat:datos.cat,medio:datos.medio||'Efectivo',tipogasto:datos.tipo||'Variable',monto:datos.monto};
+      if(tipo==='ingreso')   p={tipo,fecha:datos.fecha,desc:datos.desc,cat:datos.cat,medio:datos.medio||'Transferencia',monto:datos.monto};
+      if(tipo==='inversion') p={tipo,fecha:datos.fecha,tipoinv:datos.tipo,moneda:datos.moneda,monto:datos.monto,nota:datos.nota||''};
+      if(tipo==='gym')       p={tipo,semana:datos.semana,dias:datos.dias};
+      await fetch(buildUrl(cfg.sheetsUrl,p),{method:'GET',mode:'no-cors'});
+      ok++;
+    }catch(e){err++;}
+  }
+
+  prog.innerHTML='📤 Enviando gastos ('+db.gastos.length+')...';
+  for(const g of db.gastos){await enviar('gasto',g);await new Promise(r=>setTimeout(r,150));}
+
+  prog.innerHTML+='<br>📤 Enviando ingresos ('+db.ingresos.length+')...';
+  for(const i of db.ingresos){await enviar('ingreso',i);await new Promise(r=>setTimeout(r,150));}
+
+  prog.innerHTML+='<br>📤 Enviando inversiones ('+db.inversiones.length+')...';
+  for(const i of db.inversiones){await enviar('inversion',i);await new Promise(r=>setTimeout(r,150));}
+
+  prog.innerHTML+='<br>📤 Enviando gym ('+db.gym.length+')...';
+  for(const g of db.gym){await enviar('gym',g);await new Promise(r=>setTimeout(r,150));}
+
+  prog.innerHTML+='<br><br>✅ Sincronización completa — '+ok+' registros enviados'+(err>0?' ('+err+' errores)':'');
+  flash('Sincronización completa ✓');
+}
+
 function resetDatos(){
   if(!confirm('¿Seguro? Esto borra todos los registros.'))return;
   db={gastos:[],ingresos:[],inversiones:[],gym:[]};gymDias=[];
